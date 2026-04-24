@@ -82,8 +82,22 @@ PowerShell이면 `.\scripts\run.ps1 ...` 사용.
 | `mimiciv_note` | 4 | discharge, radiology 노트 |
 | `mimiciv_ecg` | 3 | ECG 메타/파형 |
 
-`mimiciv_derived`는 로드되어 있지 않음 → SOFA/sepsis-3 등은 직접 계산하거나
-[mit-lcp/mimic-code](https://github.com/MIT-LCP/mimic-code) SQL을 적용해야 함.
+`mimiciv_derived` 빌드 (AI Clinician 표준 코호트/피처에 필요):
+
+```bash
+# 1. mit-lcp/mimic-code 클론 (이 레포 옆에 — 별도 외부 의존성)
+cd ..
+git clone --depth 1 https://github.com/MIT-LCP/mimic-code.git
+cd cdss_vasopressor
+
+# 2. 빌드 실행 (30~60분, 로그는 scripts/build_derived.log)
+scripts\run.bat scripts\build_derived.py
+```
+
+빌드 후 생성되는 핵심 테이블:
+`sofa`, `sapsii`, `oasis`, `sepsis3`, `suspicion_of_infection`, `vasoactive_agent`,
+**`norepinephrine_equivalent_dose`** (이 프로젝트 액션 변수의 출처), `vitalsign`, `bg`,
+`weight_durations`, `first_day_*`, `ventilation`, `kdigo_stages` 등.
 
 ## 참고 선행연구
 

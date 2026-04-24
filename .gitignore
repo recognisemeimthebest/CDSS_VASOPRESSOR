@@ -56,3 +56,7 @@ desktop.ini
 # Logs
 *.log
 logs/
+
+# External dependency cloned alongside this project (mit-lcp/mimic-code)
+# Not part of this repo — built separately for mimiciv_derived schema generation
+../mimic-code/
