@@ -1,0 +1,26 @@
+name: cdss_vasopressor
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - psycopg2
+  - sqlalchemy
+  - pandas
+  - numpy
+  - scipy
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  - jupyterlab
+  - tqdm
+  - python-dotenv
+  - pytorch
+  - torchvision
+  - pytorch-cuda=12.1
+  - pip:
+      - streamlit
+      - plotly
