@@ -76,6 +76,17 @@
 - Phase 0.5 환경 셋업 완료 (커밋 755569d)
 - **Phase 0.7 완료**: mimiciv_derived 빌드 (63 테이블, sepsis3 41k stays, NE-equiv 784k rows)
 - **Phase 0.9 완료**: 전역 훅 cwd-aware 패치 → cdss_vasopressor 워크스페이스 자동 인식
+- **Phase 0.95 완료**: 선행연구 조사 + 스킬 챕터 보강
+  - 리서치 에이전트로 16편+ 논문 조사 (AI Clinician 계보 + 방사선 RT RL + 안전성 논문)
+  - DOI 4편 웹 검증 (Festor 2022는 npj 아닌 BMJ Health Care Inform 으로 정정)
+  - ch05/ch07/ch03에 학술 근거 보강: dual OPE (WIS+FQE+ESS+CI), null-policy baseline,
+    dead-end head, encoder ablation, mortality 주장 금지
+  - PROJECT_PLAN §9 검증된 인용으로 갱신, 메모리 `research_grounded_decisions.md` 추가
+
+## 코호트 다듬기 — 보류 중 (다음 작업)
+- 현재 정의로 14,506 stay/환자
+- 검토할 axis: 윈도우/vasopressor 강도/Sepsis onset/시작시점/제외기준
+- 사용자가 어느 axis 부터 손볼지 결정 필요
 - **Phase 0.8 완료**: HARNESS B 풀세트 적용
   - `.claude/` 풀구조 (settings.local.json, hooks, skills × 10, agents × 8)
   - PROJECT_PLAN.md (기획서, 읽기 전용), AGENT_REPORT_FORMAT.md

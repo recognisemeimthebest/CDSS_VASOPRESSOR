@@ -56,3 +56,30 @@ columns = [
 - reward proxy: SOFA 변화량, 90-day mortality (terminal)
 - done flag: 사망 또는 ICU 퇴실 시 True
 - terminal reward: alive=+15, dead=-15 (AI Clinician 기본)
+
+## Encoder Ablation (필수 — 모델 선택보다 중요)
+
+Killian et al. 2020 (NeurIPS ML4H *An Empirical Study of Representation Learning for RL in Healthcare*):
+> "상태 표현(encoder) 선택이 OPE 결과에 정책(알고리즘) 선택보다 더 큰 영향을 미친다."
+
+→ 우리 코드 구조는 **피처 추출과 인코더를 분리**:
+
+```
+src/
+├── features.py              # 4h bin DataFrame 생성 (이 챕터 본문)
+└── models/
+    └── encoders/
+        ├── mlp.py           # 평균/최근값 피처를 그대로 MLP 입력
+        ├── lstm.py          # bin 시퀀스를 LSTM 입력
+        └── transformer.py   # bin 시퀀스를 attention pooling
+```
+
+각 인코더는 동일 인터페이스 `(B, T, F) -> (B, D_repr)` 로 통일 → 같은 정책/Q-network 에 꽂아 OPE 비교.
+
+**최소 ablation 대상**:
+1. MLP (마지막 bin만 + 정적 피처)
+2. MLP (윈도우 평균/min/max 집계 + 정적 피처)
+3. LSTM (전체 시퀀스)
+4. 작은 Transformer (전체 시퀀스, ≤4 layers)
+
+각 인코더에 대해 동일 알고리즘(BC 또는 dBCQ)으로 학습 → ch07 OPE 표에 행으로 추가.

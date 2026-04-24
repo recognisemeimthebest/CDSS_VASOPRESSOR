@@ -18,10 +18,23 @@
 - Brier score (multi-class adapted)
 
 ### Offline RL (필수 OPE)
-- **WIS**: weighted importance sampling
-- **FQE**: separate critic 로 V^π 추정
+
+단일 점추정 보고 금지. 항상 다중 OPE + 신뢰구간 + null-policy 비교 (Gottesman 2018/19; Tang & Wiens 2021).
+
+- **WIS** (Weighted Importance Sampling): trajectory IS weight × reward
+- **FQE** (Fitted Q Evaluation): 별도 critic 학습으로 V^π 추정. WIS 보완.
+- **WIS와 FQE 둘 다 보고 필수** (한 가지만 보고 → reject)
+- **Bootstrap CI**: 1000회, 95% percentile interval
+- **ESS** (Effective Sample Size): IS weight 분포의 유효 샘플 수. ESS < 5% of N 이면 그 정책 비교 결과 무효 처리.
+- **Null-policy baseline**: zero-action / uniform-random / constant-dose (예: 항상 NE-equiv 0.1) 정책의 WIS/FQE를 학습 정책과 같은 표에 출력 (Jeter 2019)
 - **clinician matching rate**: 학습 정책 추천 = 의사 실제 액션 비율
-- **OOD 비율**: behavior policy 분포 밖 액션 추천 빈도
+- **OOD 비율**: behavior policy 분포 밖 액션 추천 빈도. 너무 높으면 (>10%) BCQ threshold 또는 CQL alpha 조정.
+
+### 정직성 가드 (Honesty Guard)
+
+- **Mortality 감소 주장 절대 금지** — prospective RCT 없으면 OPE 결과를 "환자 살림"으로 해석 금지 (Festor 2022, Wu 2023, Roggeveen 2021).
+- 보고서 결론은 "정책 X는 의사 정책 대비 OPE 상 ___의 expected return을 보였으나, 임상 효과는 prospective 검증 전까지 알 수 없다" 식으로.
+- README/논문 disclaimer 필수 (PROJECT_PLAN §8 참조).
 
 ## Fairness / Subgroup 분석 (필수)
 

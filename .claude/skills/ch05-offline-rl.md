@@ -26,13 +26,31 @@
 
 ## 안전 평가 (필수)
 
-오프라인 RL 모델은 **반드시** off-policy evaluation을 통과해야 함:
+오프라인 RL 모델은 **반드시** off-policy evaluation을 통과해야 함. 단일 OPE 점추정만 보고 정책 결정 금지 (Gottesman 2018/19, Tang & Wiens 2021):
 
-- **WIS** (Weighted Importance Sampling)
-- **FQE** (Fitted Q Evaluation) — 별도 critic 학습으로 정책 가치 추정
-- **Doubly Robust** (선택)
+- **WIS** (Weighted Importance Sampling) — variance 큼, ESS 같이 보고
+- **FQE** (Fitted Q Evaluation) — 별도 critic 학습으로 정책 가치 추정. WIS 보완.
+- **WIS + FQE 둘 다 필수** (한 가지만 보고 금지)
+- **Bootstrap CI 1000회** + **ESS (Effective Sample Size)** 명시
+- **Null-policy baseline 비교**: zero-action / random / constant-dose 정책의 OPE 값과 같이 표 출력 (Jeter 2019: 일부 RL 정책이 random보다 낫지 않음에도 좋아 보일 수 있음)
+- **Doubly Robust** (선택, variance 추가 감소)
 
 평가 결과 + 의사 정책과 비교 시각화는 ch07 참조.
+
+## Dead-end head (선택, 안전성 강화)
+
+Fatemi et al. 2021 (NeurIPS *Medical Dead-ends and Learning to Identify High-Risk States and Treatments*):
+- 단일 최적 액션 추천보다 "**해서는 안 되는 액션**" 식별이 임상 안전성에서 더 가치 있음
+- 우리 출력 head 두 개로 확장 고려:
+  - (1) 권장 NE-equiv dose (기존)
+  - (2) Contraindication flag — "이 상태에서 dose ↑ 하면 사망 확률 급증" 같은 경고
+- Streamlit UI에 "추천 카드" + "경고 카드" 두 영역 (ch06)
+
+## 정직성 가드 — 임상 결과 주장 금지
+
+- **Mortality 감소 주장 절대 금지** (prospective RCT 없음). OPE는 예측일 뿐.
+- AI Clinician 후속 비판 다수 (Festor 2022 BMJ Health Care Inform; Wu 2023 multi-cohort 재현 실패; Roggeveen 2021 transatlantic transfer 실패).
+- 보고서/논문에 "본 연구는 prospective validation 미수행, 임상 사용 금지" 명시 (PROJECT_PLAN §8 + ch09).
 
 ## 학습 정책 vs 의사 정책 차이 시각화 (필수)
 

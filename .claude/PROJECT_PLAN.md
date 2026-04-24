@@ -106,9 +106,21 @@ cdss_vasopressor/
 - **외부 API 호출 없음**: 모델은 로컬에서만 학습/추론. PHI(환자 식별 정보)가 외부로 나가는 코드 작성 금지.
 - 본 단계에서는 영상(CBCT) 데이터 미사용. 방사선 데이터 본 단계에서 영상 추가 검토.
 
-## 9. 참고 선행연구
+## 9. 참고 선행연구 (검증된 인용)
 
-- Komorowski et al., *AI Clinician* (Nat Med 2018) — sepsis vasopressor RL
-- Tseng et al., DRL for radiotherapy dose adaptation
-- Raghu et al., Continuous state-space models for sepsis
-- Gottesman et al., Guidelines for off-policy evaluation in healthcare
+핵심 (반드시 따라야 함):
+- **Komorowski et al. 2018** — *AI Clinician*, Nat Med 24:1716-1720, doi:10.1038/s41591-018-0213-5 — sepsis vasopressor RL 원조
+- **Raghu et al. 2017** — *Continuous State-Space Models for Optimal Sepsis Treatment*, MLHC 2017, arXiv:1705.08422 — continuous state + Dueling DDQN
+- **Tseng et al. 2017** — *Deep RL for automated radiation adaptation in lung cancer*, Med Phys 44(12):6690-6705, doi:10.1002/mp.12625 — RT RL 원조 (방사선 phase)
+
+평가/안전성 (필수 가드):
+- **Gottesman et al. 2018/19** — *Evaluating RL algorithms in observational health settings*, Nat Med correspondence, OPE 5대 함정
+- **Tang & Wiens 2021** — *Model Selection for Offline RL*, CHIL — WIS vs FQE bound 비교
+- **Killian et al. 2020** — *Empirical Study of Representation Learning for RL in Healthcare*, NeurIPS ML4H — encoder ablation 필수
+- **Fatemi et al. 2021** — *Medical Dead-ends*, NeurIPS — contraindication head 권장
+- **Festor et al. 2022** — *Assuring the safety of AI-based CDSS*, BMJ Health Care Inform 29:e100549 — safety envelope
+- **Wu et al. 2023** — multi-cohort 재현 실패, Lancet Digital Health
+- **Roggeveen et al. 2021** — transatlantic transfer 실패, Comput Biol Med
+- **Jeter et al. 2019** — Komorowski 재현 의문, arXiv:1902.03271
+
+자세한 적용 방침: `.claude/skills/ch05-offline-rl.md`, `ch07-evaluation.md`, `ch03-features-engineering.md`. 메모리: `research_grounded_decisions.md`.

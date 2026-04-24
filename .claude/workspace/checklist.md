@@ -68,6 +68,16 @@
 - [x] 옛 워크스페이스 (`g:/miniproject2/.claude/`) 제거 + data_spec.txt 이전
 - [ ] (사용자) Mimicmultimodal repo에 훅 변경 커밋
 
+## Phase 0.95: 선행연구 조사 + 스킬 보강 ✅
+- [x] 리서치 에이전트로 16편+ 논문 정리
+- [x] 핵심 4편 DOI 웹 검증 (Festor 2022 정정)
+- [x] ch05-offline-rl.md 보강 (dual OPE, null baseline, dead-end head, mortality 가드)
+- [x] ch07-evaluation.md 보강 (WIS+FQE+ESS+CI 표준, 정직성 가드)
+- [x] ch03-features-engineering.md 보강 (encoder ablation 섹션)
+- [x] PROJECT_PLAN §9 검증된 인용으로 갱신
+- [x] 메모리 `research_grounded_decisions.md` 추가
+- [ ] 커밋
+
 ## Phase 0.8: HARNESS B 풀세트 ✅ 완료
 - [x] `.claude/` 디렉토리 구조
 - [x] 워크스페이스 이전 → cdss_vasopressor/.claude/workspace/
