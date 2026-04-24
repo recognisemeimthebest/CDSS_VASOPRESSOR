@@ -81,6 +81,7 @@ PowerShell이면 `.\scripts\run.ps1 ...` 사용.
 | `mimiciv_icu` | 9 | icustays, chartevents, inputevents 등 |
 | `mimiciv_note` | 4 | discharge, radiology 노트 |
 | `mimiciv_ecg` | 3 | ECG 메타/파형 |
+| `mimiciv_derived` | 63 | sofa, sepsis3, vasoactive_agent, **norepinephrine_equivalent_dose** 등 |
 
 `mimiciv_derived` 빌드 (AI Clinician 표준 코호트/피처에 필요):
 

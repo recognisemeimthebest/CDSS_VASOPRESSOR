@@ -1,0 +1,333 @@
+                 1)                              3)  4)
+        NIA                          2)
+                ,          5,019                Json, PNG        
+                                  DCM, CVS
+
+         5)   ()                                
+
+                     2022                       
+                                                     
+                     
+()                                ()                
+                                  031-219-5337
+                                                jsclinic@naver.
+                                                       com
+
+                             5     CBCT   //  
+         
+
+                            , ,   EMR    
+
+                , CBCT, , , , , ,  , ,
+                
+
+                _1-025__.xlsx
+
+1) , , , ,
+2) txt, jpg,.....
+3) json, csv,....
+4) (), (), (), (/), (/), (/
+
+    ), () ......
+5) 4 ,  ,,.,.,
+
+                                                                              -1-
+   
+          
+
+   
+   
+
+        Cancer patient radiation treatment data
+   
+
+        CBCT  ,   EMR   
+         CBCT          
+       ,            AI  
+
+     1.    ,   CBCT    (, ,  , 
+      )              
+
+ 2.    (CBCT), (EMR)        
+                      PHR  ,      
+
+     3.             
+
+           ,   , , , 
+      .
+            ,     
+      .     30%   ,  
+       60%           .
+        ,   ,    ,     
+          . ,       
+      ,          .
+       &   ,  ,  ,       
+      ,            
+     ,   .
+                
+     CBCT   EMR (, , )   , 
+             CBCT     .
+     ,         CBCT      
+       ,    
+        , AI Hub         
+                 .
+                 
+       
+
+     1.   
+
+     §   5,019  CBCT (dcm) 2,038,143
+
+     §   5,019  () (png) 30,136
+
+     §   5,019    (csv)
+(    §   5,019  ,   (csv)
+
+)
+
+                                                 -2-
+   2.                                                                        
+       l                                        7.71%                       387
+                                                33.69%                    1,691
+                                                26.88%                    1,349
+                                                26.58%                    1,334
+                                                5.14%                       258
+                          
+                                                        CBCT 
+       l                      8.63%                          175.796
+                              41.06%                         836.958
+                              17.76%                         361.873
+                              24.86%                         506.698
+                              7.69%                          156.818
+                    
+                     
+
+   1.   
+       1) Study Population
+           §   : , , ,        
+           §  :    CBCT     19   
+           §  :      
+           §  :     
+       2) CBCT  
+           §     CBCT  (DICOM)
+           § 1   
+                - 6  6 
+           §  
+           § Axial view
+
+                              -3-
+2.                                                                             
+    § 
+
+                       
+
+1                         (: AJMC, PNUH, SCHMC )
+
+2                            (PatientID)
+
+3                        CBCT ( )
+
+4                        CBCT    (0, 1, ... ,
+                         n-1)
+
+§                                                                              
+
+                  
+
+1                         (: AJMC, PNUH, SCHMC )
+
+2                         (PatientID)
+
+3                        CBCT 
+
+4                        Image / Json / Mask
+                         * Image    
+                          
+
+3.  
+    §   CBCT  
+
+                                                                     CBCT  
+
+                         -4-
+§ () 
+
+                                           {
+                                           "info": [
+
+                                                     {
+                                                          "name": "RADIO_AJMC_C10000_CBCT_5_0046",
+                                                          "contributer": "AJMC",
+                                                          "description": ""
+
+                                                     }
+                                            ],
+                                           "annotations": [
+
+                                                  {
+                                                       "id": 0,
+                                                       "class": "Tumor",
+                                                       "type": [
+                                                                 {
+                                                                      "bbox": [
+                                                                                {"x": 237.71254006410277,
+                                                                                  "y": 232.40404647435903,
+                                                                                  "width": 35.25641025641022,
+                                                                                  "height": 27.24358974358981
+                                                                                }
+                                                                      ]
+                                                                 }
+                                                       ]
+
+                                                 }
+                                              ]
+                                           }
+
+4.  
+    § () 
+
+                                                                        
+                                  Object           
+1                  info            String                      , ,
+1-1           info.name            String    Y                 , ,
+1-2        info.contributer
+                                   String    Y                          
+1-3        info.description                  Y
+                                  Object     Y      
+2          annotations             String    Y     
+                                   String    Y      
+2-1        annotations[].id        String    Y     
+                                   String    Y     bbox 
+2-2        annotations[].class    Number     Y     bbox x 
+                                  Number           bbox y 
+2-3         annotations[].type    Number         bbox width 
+2-3-1                             Number         bbox height 
+2-3-1-1    annotations[].type.bb
+2-3-1-2                ox
+2-3-1-3
+2-3-1-4    annnotations[].type.b
+                     box.x
+
+           annnotations[].tyoe.b
+                     box.y
+
+           annnotations[].type.b
+                  box.width
+
+           annnotations[].type.b
+                  box.height
+
+§   
+
+                        Data Type                 
+patientid  ID
+                        VarChar(7)      
+
+                                  -5-
+  sex                         Char(1)     M:, F:
+
+birth date                    Date        YYYYMM (,   )
+
+height                        Integer     120~220 (Cm)
+
+weight                        Integer     30~220 (Kg)
+
+Diagnosis                   Varchar(200)    (`,' )
+
+   bp                         Char(1)     Y/N
+
+   bs                         Char(1)     Y/N
+
+   sm                         Char(1)     Y/N
+
+familyhistory                  Char(1)          Y/N
+locationcancer                 Char(1)   
+cancerimaging               Varchar(10)         1. / 2., / 3., / 4., / 9.
+                                                
+
+cancerimagingT  T Varchar(10) 
+
+cancerimagingN  N Varchar(10) 
+
+cancerimagingM    M         Varchar(10)         yyyymmdd :   (, , ) 
+    initialdate                  Date               
+    treatedate                   Date     
+                                                yyyymmdd
+
+  relapse                     Char(1)           1:  , 2: , 3: 
+relapsedate                     Date     
+                                                yyyymmdd : (relapse) 2: , 3:  
+    dead                      Char(1)               
+ deathdate                      Date     
+ deathsign                                      0: , 1:  (  0 )
+                              Char(1)
+                                                yyyymmdd : (dead)  = 1  
+                                                  
+
+                                                1:   / 2.   
+
+lastdate                      Date        yyyymmdd
+
+§     
+
+                                    Data Type             
+
+            patientid     ID        VarChar(7)      
+
+        classification      Char(1)              1.  /2.  /3. 
+            cancer
+
+       surgical cancer    Varchar(10) 
+
+              surgical cancerT   T Varchar(10) 
+
+  surgical cancerN   N Varchar(10) 
+
+              surgical cancerM   M Varchar(10) 
+
+       boundarysurgical   Char(1)  1.   / 2. 
+
+   Involvementrenal    Boolean 
+
+          lymphrenal        Boolean 
+
+       surgicalmethod               Varchar(100)    (',' )
+
+            antidrug        Varchar(100) 
+
+         totaldose          Integer             
+        radiationcnt         Integer            
+
+       radiationperdose                Integer  
+                                  
+
+                                    -6-
+      treatmethod     Char(1)    1.  /2.  /3. + /4.
+        treatech      Char(1)    +  /5. + /6.
+                                 ++ /7. ++ /8.
+                                 
+
+                                 1. conformal /2. IMRT /3. 
+
+                                                              
+                               ()            jsclinic@naver.   
+                                             com
+                               031-219-5337
+                                                 
+                                               
+                               
+                                               
+                                   
+                                               
+                   /
+                                    
+                               
+                      /
+                                    
+          
+                                 
+          
+                                             AI  
+
+                      -7-
+

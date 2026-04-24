@@ -49,17 +49,24 @@
 - [ ] 방사선 데이터 어댑터 자리 마련 (스키마만)
 - [ ] 데모 시나리오
 
-## Phase 0.7: mimiciv_derived 빌드
-- [x] psql 위치 확인 (`C:\Program Files\PostgreSQL\16\bin\psql.exe`)
-- [x] mit-lcp/mimic-code clone (`g:\miniproject2\mimic-code\`)
-- [x] postgres-make-concepts.sql 구조 확인 (norepinephrine_equivalent_dose 포함됨)
+## Phase 0.7: mimiciv_derived 빌드 ✅ 완료
+- [x] psql 위치 확인
+- [x] mit-lcp/mimic-code clone
+- [x] postgres-make-concepts.sql 구조 확인
 - [x] 빌드 스크립트 (`scripts/build_derived.py`)
 - [x] PG 튜닝 (parallel workers 2→4)
-- [~] 빌드 실행 중 (sofa 단계, ~85%)
-- [ ] 핵심 테이블 검증
-- [ ] `.env`에 MIMIC_DERIVED_SCHEMA 추가
-- [ ] `verify_env.py` 재실행
-- [ ] 커밋
+- [x] 빌드 실행 (63 테이블 생성, 핵심 8개 모두 정상)
+  - sepsis3: 41,296 rows / norepinephrine_equivalent_dose: 783,613 / sofa: 8.2M / vitalsign: 13.5M
+- [x] `.env` + `.env.example` 에 MIMIC_DERIVED_SCHEMA 추가
+- [x] `verify_env.py` 재실행 — 5 schemas 인식
+- [ ] 커밋 (다음 단계)
+
+## Phase 0.9: 전역 훅 cwd-aware 수정 ✅
+- [x] g:/Mimicmultimodal/.claude/hooks/analyze_prompt.py 에 `_resolve_workspace_root()` 추가
+- [x] stop_checklist.py 에도 동일 로직 추가
+- [x] 동작 검증 — `g:/miniproject2/cdss_vasopressor/.claude/workspace/` 가리키도록 자동 해석
+- [x] 옛 워크스페이스 (`g:/miniproject2/.claude/`) 제거 + data_spec.txt 이전
+- [ ] (사용자) Mimicmultimodal repo에 훅 변경 커밋
 
 ## Phase 0.8: HARNESS B 풀세트 ✅ 완료
 - [x] `.claude/` 디렉토리 구조

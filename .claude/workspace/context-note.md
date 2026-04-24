@@ -74,11 +74,8 @@
 
 ## 진행 현황
 - Phase 0.5 환경 셋업 완료 (커밋 755569d)
-- **Phase 0.7 진행 중**: mimiciv_derived 빌드
-  - mit-lcp/mimic-code clone (`g:\miniproject2\mimic-code\`, gitignore)
-  - psql로 postgres-make-concepts.sql 백그라운드 실행
-  - **PG 튜닝**: max_parallel_workers_per_gather 2→4, maintenance_workers 2→4 (CPU 9700X)
-  - sofa 단계 진입 (~85% 진행)
+- **Phase 0.7 완료**: mimiciv_derived 빌드 (63 테이블, sepsis3 41k stays, NE-equiv 784k rows)
+- **Phase 0.9 완료**: 전역 훅 cwd-aware 패치 → cdss_vasopressor 워크스페이스 자동 인식
 - **Phase 0.8 완료**: HARNESS B 풀세트 적용
   - `.claude/` 풀구조 (settings.local.json, hooks, skills × 10, agents × 8)
   - PROJECT_PLAN.md (기획서, 읽기 전용), AGENT_REPORT_FORMAT.md
