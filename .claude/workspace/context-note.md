@@ -114,6 +114,32 @@ sepsis3 + adult + LOS≥1d + first ICU stay + got NE-ever + **NE 시작 > intime
 - ROW_NUMBER tiebreak는 `intime` 만 (필요시 stay_id 추가로 결정론 강화)
 - gender NULL 그대로 유지 — 노트북에서만 "Unknown" 표시, 코호트 필터 아님
 - race는 admissions 테이블에서 직접 (hadm_id 1:1), 노트북에서 7-bucket으로 집계
+
+## Phase 2 완료 (features-agent + 사용자 검증)
+- `src/features.py` 약 540줄 — 7개 derived 테이블 조인, 4h bin × stay 18 timesteps
+- 검증: `data/features_v1.parquet` **235,278 rows × 86 cols** (14.6MB), 14초 빌드
+- `src/splits.py` — subject_random 70/15/15, **leakage 0 confirmed**
+  - train 9149 / val 1961 / test 1961 (`data/splits_v1.json`)
+- `notebooks/02_features_eda.ipynb` — 11 셀 sanity (실행 완료, 232KB)
+- `tests/test_features.py` — pure-logic + DB integration
+- `artifacts/feature_stats_v1.json` — variable mean/std/median/missing rate
+
+### 액션 분포 (5-bin NE-equiv mcg/min)
+- 0 (NE 없음): 136,218 (57.9%) — 매우 불균형
+- 1 (≤8.4): 57,932 (24.6%)
+- 2 (8.4-20.28): 24,537 (10.4%)
+- 3 (20.28-50): 13,310 (5.7%)
+- 4 (>50): 3,281 (1.4%)
+→ 분류 모델은 class-weight 또는 macro-F1 필수 (ch04 명시)
+
+### 비자명한 결정 (features.py)
+- SOFA = `*_24hours` 컬럼 (24h max, instantaneous보다 안정적). coagulation은 `coagulation_score`로 rename (lab의 inr/ptt와 구분)
+- vent_flag: InvasiveVent/Tracheostomy/NonInvasiveVent만 양성. HighFlow/SupplementalOxygen 제외
+- bg/chemistry/coag/cbc는 stay_id 없음 → subject_id+hadm_id로 icustays 재조인
+- next_ne_dose 산출: SQL 윈도우 76h로 확장 후 t_bin shift (bin 17의 next는 72-76h)
+- Vitals: heart_rate/resp_rate를 hr/rr로 alias 통일
+- weight 결측 stay → 코호트 평균 (kg)
+- chunk=3000 ids로 SQL 분할 → PG plan cache 안정화
 - **Phase 0.8 완료**: HARNESS B 풀세트 적용
   - `.claude/` 풀구조 (settings.local.json, hooks, skills × 10, agents × 8)
   - PROJECT_PLAN.md (기획서, 읽기 전용), AGENT_REPORT_FORMAT.md
