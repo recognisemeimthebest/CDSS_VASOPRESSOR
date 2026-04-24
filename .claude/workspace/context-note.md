@@ -83,10 +83,21 @@
     dead-end head, encoder ablation, mortality 주장 금지
   - PROJECT_PLAN §9 검증된 인용으로 갱신, 메모리 `research_grounded_decisions.md` 추가
 
-## 코호트 다듬기 — 보류 중 (다음 작업)
-- 현재 정의로 14,506 stay/환자
-- 검토할 axis: 윈도우/vasopressor 강도/Sepsis onset/시작시점/제외기준
-- 사용자가 어느 axis 부터 손볼지 결정 필요
+## 코호트 — 확정 (13,071 stays/subjects)
+sepsis3 + adult + LOS≥1d + first ICU stay + got NE-ever + **NE 시작 > intime + 누적 ≥ 1h**
+
+**Why 추가한 두 조건**:
+- "NE 시작 > intime": 외부 transfer 도중 NE 연속 케이스 배제 → ICU 의사결정 학습 신호 정제
+- "누적 ≥ 1h": 일회성 bolus 환자 배제 → 결정 일관성 확보
+
+**대안 검토**: 60min grace는 -35% 데이터 손실로 너무 엄격, 0min threshold는 literal-transfer만 깔끔히 제거 (≈10% 손실로 적정).
+
+표준 SQL은 `ch02-sepsis3-cohort.md` 참조. quick check SQL: `scripts/quick_consort_eb.sql`.
+
+## 모델링 — 둘 다
+- Supervised (Phase A) = 의사 결정 모방, 베이스라인. LR/GBM/MLP/Transformer.
+- **Offline RL (Phase B) = 본 모델**. BC → Dueling DDQN → dBCQ → CQL. AI Clinician 표준.
+- 같은 코호트를 둘 다 학습 → 결과 비교 (RL이 의사와 얼마나 다른가)
 - **Phase 0.8 완료**: HARNESS B 풀세트 적용
   - `.claude/` 풀구조 (settings.local.json, hooks, skills × 10, agents × 8)
   - PROJECT_PLAN.md (기획서, 읽기 전용), AGENT_REPORT_FORMAT.md

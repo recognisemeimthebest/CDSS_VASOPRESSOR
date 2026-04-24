@@ -1,12 +1,14 @@
 # ch02 — Sepsis-3 코호트 정의
 
-## 코호트 기준 (확정 — PROJECT_PLAN §2)
+## 코호트 기준 (확정 — PROJECT_PLAN §2 — 13,071 stays)
 
 1. `mimiciv_derived.sepsis3` 의 stay_id (sepsis-3 만족)
 2. ICU 입실 시 성인 (`age >= 18` from `mimiciv_derived.age`)
 3. ICU 첫 stay만 (한 환자 다수 stay 시 가장 이른 것)
 4. ICU 길이 ≥ 24h (`icustays.los >= 1.0` days)
-5. **vasopressor 한 번이라도 받은 stay 만 학습 코호트** (추천 모델은 vasopressor 의사결정 학습)
+5. NE-equivalent 한 번이라도 받음 (`norepinephrine_equivalent_dose.norepinephrine_equivalent_dose > 0`)
+6. **NE 첫 시작 시점 > intime** (외부 transfer 도중 NE 받던 환자 제외 — ICU 의사결정 학습 신호 정제)
+7. **누적 NE 사용 시간 ≥ 1h** (일회성 bolus 환자 제외 — 결정 일관성 확보)
 
 ## 윈도우
 
@@ -15,7 +17,7 @@
 - bin: 4 hours
 - 따라서 stay 당 최대 18개 timestep
 
-## 표준 SQL 스니펫
+## 표준 SQL 스니펫 (13,071 stays 산출)
 
 ```sql
 WITH adult_first_icu AS (
@@ -27,17 +29,25 @@ WITH adult_first_icu AS (
     WHERE a.age >= 18 AND i.los >= 1.0
 ),
 sepsis_first AS (
-    SELECT s.stay_id
-    FROM mimiciv_derived.sepsis3 s
-    JOIN adult_first_icu f ON f.stay_id = s.stay_id
+    SELECT f.*
+    FROM adult_first_icu f
     WHERE f.stay_num = 1
+      AND EXISTS (SELECT 1 FROM mimiciv_derived.sepsis3 s WHERE s.stay_id = f.stay_id)
 ),
-got_vasopressor AS (
-    SELECT DISTINCT v.stay_id
-    FROM mimiciv_derived.norepinephrine_equivalent_dose v
-    JOIN sepsis_first sf USING (stay_id)
+ne_per_stay AS (
+    SELECT n.stay_id,
+           MIN(n.starttime) AS first_ne_time,
+           SUM(EXTRACT(EPOCH FROM (n.endtime - n.starttime)))/3600.0 AS cum_hours
+    FROM mimiciv_derived.norepinephrine_equivalent_dose n
+    WHERE n.norepinephrine_equivalent_dose > 0
+    GROUP BY n.stay_id
 )
-SELECT * FROM got_vasopressor;
+SELECT s.stay_id, s.subject_id, s.hadm_id, s.intime, s.outtime, s.age,
+       n.first_ne_time, n.cum_hours
+FROM sepsis_first s
+JOIN ne_per_stay n USING (stay_id)
+WHERE n.first_ne_time > s.intime    -- 외부 transfer NE 연속 제외
+  AND n.cum_hours >= 1.0;           -- 일회성 bolus 제외
 ```
 
 ## 제외 사유 정직히 기록
