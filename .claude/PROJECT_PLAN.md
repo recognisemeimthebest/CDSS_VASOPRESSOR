@@ -15,11 +15,18 @@
 **출력**: norepinephrine-equivalent dose 추천 (단일 연속값 또는 5-bin 이산값)
 **평가**: 의사 실제 결정과의 일치도, off-policy evaluation (RL 시), 임상 결과 보정
 
-### 코호트 (확정)
+### 코호트 (확정 — 13,071 stays/subjects)
 - `mimiciv_derived.sepsis3` 기준 patient-stay
 - 성인 (≥18세)
-- ICU 입실 첫 72시간 윈도우
-- vasopressor 한 번이라도 받은 stay만
+- ICU 첫 stay만, ICU LOS ≥ 24h
+- vasopressor (NE-equiv > 0) 한 번이라도 받음
+- **NE 첫 시작 시점 > intime** (외부 transfer NE 연속 케이스 제외)
+- **누적 NE 사용 시간 ≥ 1h** (일회성 bolus 제외)
+
+Consort flow: 29,320 first-stay pool → 14,506 (got NE) → 13,964 (start>intime) → **13,071 (cum≥1h)**.
+
+### 분석 윈도우
+- ICU 입실 후 첫 72시간, 4시간 bin (stay당 최대 18 timestep)
 
 ### 액션 표현 (확정)
 - `mimiciv_derived.norepinephrine_equivalent_dose` 사용
