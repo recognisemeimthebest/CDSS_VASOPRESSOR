@@ -98,6 +98,22 @@ sepsis3 + adult + LOS≥1d + first ICU stay + got NE-ever + **NE 시작 > intime
 - Supervised (Phase A) = 의사 결정 모방, 베이스라인. LR/GBM/MLP/Transformer.
 - **Offline RL (Phase B) = 본 모델**. BC → Dueling DDQN → dBCQ → CQL. AI Clinician 표준.
 - 같은 코호트를 둘 다 학습 → 결과 비교 (RL이 의사와 얼마나 다른가)
+
+## Phase 1 완료 (cohort-agent)
+- `src/cohort.py` 작성 — `load_cohort()`, `compute_consort_flow()`, `save_consort_flow()`
+- 검증: `scripts\run.bat -m src.cohort` 실행 → **13,071 stays / 13,071 subjects 확인**
+- 캐시: `data/cohort_v1.parquet` (1.5MB), `data/cohort_v1_consort.csv`
+- 코호트 인구학 (첫 결과):
+  - Age mean=67.1, median=68.5
+  - Gender: M 7,820 / F 5,251
+  - In-hospital mortality: **23.1%** (전형적 septic shock)
+- 노트북 `notebooks/01_cohort_eda.ipynb` 작성됨, 실행 진행 중
+
+### 비자명한 결정 (cohort.py)
+- sepsis3_onset_time = `MIN(sofa_time)` (sepsis3 테이블이 SOFA 윈도우 이동마다 다중 row 생성)
+- ROW_NUMBER tiebreak는 `intime` 만 (필요시 stay_id 추가로 결정론 강화)
+- gender NULL 그대로 유지 — 노트북에서만 "Unknown" 표시, 코호트 필터 아님
+- race는 admissions 테이블에서 직접 (hadm_id 1:1), 노트북에서 7-bucket으로 집계
 - **Phase 0.8 완료**: HARNESS B 풀세트 적용
   - `.claude/` 풀구조 (settings.local.json, hooks, skills × 10, agents × 8)
   - PROJECT_PLAN.md (기획서, 읽기 전용), AGENT_REPORT_FORMAT.md
