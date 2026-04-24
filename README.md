@@ -47,10 +47,43 @@ cdss_vasopressor/
 ## 셋업
 
 ```bash
-conda env create -f environment.yml
-conda activate cdss_vasopressor
+# 기본 패키지 (PyTorch는 OMP 충돌 회피 위해 분리 설치)
+conda create --prefix G:/anaconda_envs/cdss_vasopressor -c conda-forge -y \
+    python=3.11 psycopg2 sqlalchemy pandas numpy scipy scikit-learn \
+    matplotlib seaborn jupyterlab tqdm python-dotenv pip
+
+# PyTorch CUDA 12.1 + Streamlit (pip)
+conda activate G:/anaconda_envs/cdss_vasopressor
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+pip install streamlit plotly
+
 cp .env.example .env   # DB 접속정보 채우기
 ```
+
+## 실행 (Windows)
+
+`python.exe`를 직접 호출하면 conda MKL과 PyTorch OpenMP 충돌로 DLL 에러가 남.
+런처 스크립트로 실행:
+
+```bat
+scripts\run.bat scripts\verify_env.py        :: 환경/DB 검증
+scripts\run.bat -m streamlit run app\main.py :: Streamlit
+scripts\run.bat -m jupyter lab               :: JupyterLab
+```
+
+PowerShell이면 `.\scripts\run.ps1 ...` 사용.
+
+## 실제 MIMIC-IV 스키마 (이 환경 기준)
+
+| 스키마 | 테이블 수 | 비고 |
+|---|---|---|
+| `mimiciv_hosp` | 22 | admissions, patients, labevents, prescriptions 등 |
+| `mimiciv_icu` | 9 | icustays, chartevents, inputevents 등 |
+| `mimiciv_note` | 4 | discharge, radiology 노트 |
+| `mimiciv_ecg` | 3 | ECG 메타/파형 |
+
+`mimiciv_derived`는 로드되어 있지 않음 → SOFA/sepsis-3 등은 직접 계산하거나
+[mit-lcp/mimic-code](https://github.com/MIT-LCP/mimic-code) SQL을 적용해야 함.
 
 ## 참고 선행연구
 
