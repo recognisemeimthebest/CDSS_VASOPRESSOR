@@ -60,3 +60,8 @@ logs/
 # External dependency cloned alongside this project (mit-lcp/mimic-code)
 # Not part of this repo — built separately for mimiciv_derived schema generation
 ../mimic-code/
+
+# Claude Code orchestration: keep config + skills + agents tracked, but not transient state
+.claude/hooks/shared/change-log.md
+.claude/hooks/shared/*.log
+!.claude/hooks/shared/.gitkeep

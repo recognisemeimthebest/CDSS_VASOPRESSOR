@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "defaultMode": "bypassPermissions",
+    "additionalDirectories": [
+      "g:\\miniproject2\\cdss_vasopressor\\.claude\\hooks",
+      "g:\\miniproject2\\cdss_vasopressor\\.claude\\skills",
+      "g:\\miniproject2\\cdss_vasopressor\\.claude\\agents",
+      "g:\\miniproject2\\cdss_vasopressor\\.claude\\workspace",
+      "g:\\miniproject2\\mimic-code"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash g:/miniproject2/cdss_vasopressor/.claude/hooks/post-tool-use.sh",
+            "timeout": 8
+          }
+        ]
+      }
+    ]
+  }
+}
