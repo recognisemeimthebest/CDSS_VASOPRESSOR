@@ -123,6 +123,22 @@ def _build_final_model(
         if task_canon == "regression":
             return cls(alpha=float(best_params.get("alpha", 1.0)), random_state=seed)
         return cls(C=float(best_params.get("C", 1.0)), random_state=seed)
+    if model == "tcn":
+        from src.models._tcn import TCNConfig
+
+        cfg_kwargs: dict[str, Any] = {"random_state": seed}
+        # Pull TCN-specific channel list out of best_params if present.
+        ch: list[int] = []
+        for k, v in best_params.items():
+            if k == "n_blocks":
+                continue
+            if k.startswith("ch_"):
+                ch.append(int(v))
+                continue
+            cfg_kwargs[k] = v
+        if ch:
+            cfg_kwargs["channels"] = tuple(ch)
+        return cls(config=TCNConfig(**cfg_kwargs))
     raise ValueError(f"Unknown model {model!r}")
 
 
@@ -250,7 +266,7 @@ def run(
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Train a supervised baseline.")
-    p.add_argument("--model", required=True, choices=["lr", "gbm", "mlp"])
+    p.add_argument("--model", required=True, choices=["lr", "gbm", "mlp", "tcn"])
     p.add_argument("--task", required=True, choices=["reg", "cls", "regression", "classification"])
     p.add_argument("--tune", action="store_true")
     p.add_argument("--n-trials", type=int, default=25)

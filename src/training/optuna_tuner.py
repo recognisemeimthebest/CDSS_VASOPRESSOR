@@ -234,6 +234,71 @@ def tune_linear(
 # -----------------------------------------------------------------------------
 
 
+def _tcn_param_space(trial: optuna.Trial, task: str) -> dict[str, Any]:
+    n_blocks = trial.suggest_int("n_blocks", 2, 4)
+    channels = []
+    for i in range(n_blocks):
+        channels.append(trial.suggest_categorical(f"ch_{i}", [32, 64, 96, 128]))
+    params: dict[str, Any] = {
+        "n_blocks": n_blocks,
+        **{f"ch_{i}": c for i, c in enumerate(channels)},
+        "kernel_size": trial.suggest_categorical("kernel_size", [3, 5]),
+        "dropout": trial.suggest_float("dropout", 0.05, 0.5),
+        "head_hidden": trial.suggest_categorical("head_hidden", [0, 64, 128]),
+        "learning_rate": trial.suggest_float("learning_rate", 1e-4, 5e-3, log=True),
+        "weight_decay": trial.suggest_float("weight_decay", 1e-7, 1e-3, log=True),
+        "batch_size": trial.suggest_categorical("batch_size", [128, 256, 512]),
+    }
+    if task == "classification":
+        params["use_focal"] = trial.suggest_categorical("use_focal", [False, True])
+        if params["use_focal"]:
+            params["focal_gamma"] = trial.suggest_float("focal_gamma", 1.0, 3.0)
+    return params
+
+
+def tune_tcn(
+    task: str,
+    train: FeatureMatrix,
+    val: FeatureMatrix,
+    n_trials: int = 15,
+    seed: int = 42,
+) -> dict[str, Any]:
+    from src.models._tcn import TCNClassifier, TCNConfig, TCNRegressor
+
+    # Infer T and F from the all_bins flat width (T*F columns).
+    n_features = len(train.feature_names)  # post-flatten width
+    # We know T = 18 from PROJECT_PLAN; original F = width / 18.
+    n_timesteps = 18
+    base_f = n_features // n_timesteps
+
+    def objective(trial: optuna.Trial) -> float:
+        params = _tcn_param_space(trial, task)
+        # Pop helper keys not consumed by TCNConfig.
+        n_blocks = params.pop("n_blocks")
+        ch_keys = [k for k in list(params.keys()) if k.startswith("ch_")]
+        channels = tuple(int(params.pop(k)) for k in sorted(ch_keys)[:n_blocks])
+        cfg = TCNConfig(
+            n_timesteps=n_timesteps,
+            n_features=base_f,
+            channels=channels,
+            random_state=seed,
+            **params,
+        )
+        m = TCNRegressor(config=cfg) if task == "regression" else TCNClassifier(config=cfg)
+        metrics = m.fit(train.X, train.y, val.X, val.y, optuna_trial=trial)
+        return _objective_value(task, metrics)
+
+    study = _make_study("tcn", task, seed)
+    study.optimize(objective, n_trials=n_trials, show_progress_bar=False)
+    return {
+        "best_value": float(study.best_value),
+        "best_params": dict(study.best_params),
+        "n_trials": len(study.trials),
+        "study_name": study.study_name,
+        "storage": _storage_url("tcn", task),
+    }
+
+
 def tune(
     model: str,
     task: str,
@@ -246,6 +311,8 @@ def tune(
         return tune_lightgbm(task, train, val, n_trials=n_trials, seed=seed)
     if model == "mlp":
         return tune_mlp(task, train, val, n_trials=n_trials, seed=seed)
+    if model == "tcn":
+        return tune_tcn(task, train, val, n_trials=n_trials, seed=seed)
     if model == "lr":
         return tune_linear(task, train, val, n_trials=n_trials, seed=seed)
     raise ValueError(f"Unknown model {model!r}")

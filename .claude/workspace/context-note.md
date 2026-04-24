@@ -159,6 +159,31 @@ sepsis3 + adult + LOS≥1d + first ICU stay + got NE-ever + **NE 시작 > intime
 - **DLL 충돌**: lightgbm + torch + pandas 동시 로드 시 fbgemm.dll 로드 실패 → run_baseline.py 상단에 `import torch` 먼저 + `bootstrap_registry`에서 `_mlp` 우선 import로 해결
 - **numpy 2.x ABI 깨짐**: torch 2.5.1은 numpy 2.x와 segfault → numpy<2 (1.26.4)로 다운그레이드. environment.yml에 핀 추가
 - conda env에 pytest 누락 → pip로 추가 설치
+
+## Phase 3.5 — Encoder ablation (TCN)
+- LSTM/Transformer 제외 (유사하거나 과대), MLP_last (현재) + TCN 비교
+- `src/models/encoders/tcn.py`: causal dilated 1D conv, 2-4 blocks, weight_norm + BN + GELU + Dropout + residual
+- `src/models/_tcn.py`: TCNRegressor / TCNClassifier (MLPBase 재사용)
+- Optuna 15 trials each, GPU
+
+### 중요 caveat (직접 비교 불공정)
+- 현재 구현: `flatten='all_bins'` → **stay당 1 sample** (라벨 = 마지막 bin의 next_ne_dose)
+- 반면 LR/GBM/MLP_last → **bin당 1 sample** (라벨 = 해당 bin의 next_ne_dose)
+- 샘플 수 & 라벨 분포 다름 → 지표 비교 시 caveat 명시
+
+### TCN 결과 (Test)
+| Metric | TCN | 최고 대비 |
+|---|---|---|
+| 회귀 MAE | **0.027** | 최고 |
+| 회귀 R² | 0.301 | 낮음 (샘플 수 효과) |
+| 분류 acc | **0.734** | 최고 |
+| 분류 top-2 | **0.893** | 최고 |
+| 분류 macro-F1 | 0.433 | 낮음 (minority에 약함) |
+
+### Phase 4 RL 활용 계획
+- TCN 을 **시간별 Q-value 예측** encoder 로 사용 (매 4h bin 마다 Q(s, a) 예측)
+- 그때 per-bin 평가 가능해져 MLP_last 와 제대로 비교
+- Killian 2020 교훈: encoder 선택이 OPE 결과에 정책 선택보다 큰 영향
 - **Phase 0.8 완료**: HARNESS B 풀세트 적용
   - `.claude/` 풀구조 (settings.local.json, hooks, skills × 10, agents × 8)
   - PROJECT_PLAN.md (기획서, 읽기 전용), AGENT_REPORT_FORMAT.md

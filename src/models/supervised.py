@@ -96,5 +96,6 @@ def bootstrap_registry() -> None:
     # bundled OpenMP runtime claims the slot first; otherwise lightgbm's MKL
     # OMP claims it and torch fails with WinError 127 on fbgemm.dll.
     from src.models import _mlp  # noqa: F401  (torch first!)
+    from src.models import _tcn  # noqa: F401  (also torch — keep before lightgbm)
     from src.models import _linear  # noqa: F401
     from src.models import _gbm  # noqa: F401

@@ -70,16 +70,28 @@ src/
 └── models/
     └── encoders/
         ├── mlp.py           # 평균/최근값 피처를 그대로 MLP 입력
-        ├── lstm.py          # bin 시퀀스를 LSTM 입력
-        └── transformer.py   # bin 시퀀스를 attention pooling
+        ├── tcn.py           # 1D causal conv + dilation, 시퀀스 처리 (Bai 2018, arXiv:1803.01271)
+        ├── lstm.py          # 사용 안 함 — TCN 으로 대체 (병렬학습 빠르고 안정적)
+        └── transformer.py   # 사용 안 함 — 18-step 시퀀스에 비해 모델 큼
 ```
 
-각 인코더는 동일 인터페이스 `(B, T, F) -> (B, D_repr)` 로 통일 → 같은 정책/Q-network 에 꽂아 OPE 비교.
+각 인코더는 (flat 입력, 또는 reshape 후 시퀀스) → `(B, hidden)` 표현으로 통일 → 같은 head/policy 에 꽂아 비교.
 
-**최소 ablation 대상**:
-1. MLP (마지막 bin만 + 정적 피처)
-2. MLP (윈도우 평균/min/max 집계 + 정적 피처)
-3. LSTM (전체 시퀀스)
-4. 작은 Transformer (전체 시퀀스, ≤4 layers)
+**ablation 대상 (확정)**:
+1. **MLP_last** — 현재 bin만 (B, F=80), 샘플 수 ~165k
+2. **MLP_flat** — 모든 18 bin 평탄화 (B, T*F=1440), 샘플 수 ~9k stays
+3. **TCN** — 진짜 시퀀스 인코더 (B, T, F → 1D dilated conv → mean-pool), ~9k stays
 
-각 인코더에 대해 동일 알고리즘(BC 또는 dBCQ)으로 학습 → ch07 OPE 표에 행으로 추가.
+LSTM/Transformer 제외 이유:
+- LSTM = TCN 과 거의 같은 효과 (둘 다 시퀀스), TCN이 GPU 병렬 더 빠름
+- Transformer = 18 timestep × 80 dim 입력에 4-layer 모델 과다, dilated conv가 충분
+
+각 인코더 동일 task (회귀 + 분류) Optuna 15 trials → 결과 표 + best 선정 → Phase 4 RL의 Q-network/policy backbone에 사용.
+
+**TCN 하이퍼파라미터** (Optuna 탐색 공간):
+- n_blocks: 2-4
+- channels per block: {32, 64, 96, 128}
+- kernel_size: {3, 5}
+- dilation: 자동 (2^i)
+- dropout: 0.05-0.5
+- head_hidden: {0, 64, 128}
