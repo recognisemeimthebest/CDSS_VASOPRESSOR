@@ -10,7 +10,7 @@ dependencies:
   - psycopg2
   - sqlalchemy
   - pandas
-  - numpy
+  - numpy<2  # 2.x has ABI break with torch 2.5.x → segfault on .to_numpy()/parquet load
   - scipy
   - scikit-learn
   - matplotlib
@@ -24,3 +24,6 @@ dependencies:
   - pip:
       - streamlit
       - plotly
+      - lightgbm>=4.5
+      - optuna>=4.0
+      - optuna-dashboard>=0.15

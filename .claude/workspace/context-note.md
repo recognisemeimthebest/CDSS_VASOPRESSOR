@@ -140,6 +140,25 @@ sepsis3 + adult + LOS≥1d + first ICU stay + got NE-ever + **NE 시작 > intime
 - Vitals: heart_rate/resp_rate를 hr/rr로 alias 통일
 - weight 결측 stay → 코호트 평균 (kg)
 - chunk=3000 ids로 SQL 분할 → PG plan cache 안정화
+
+## Phase 3 완료 (supervised-model-agent + 사용자 검증)
+- 모델 6종 학습 완료 (LR/GBM/MLP × 회귀/분류)
+- Optuna 튜닝: GBM 50 trials, MLP 25 trials (TPE + MedianPruner)
+- 정규화: dropout (Optuna 튜닝), AdamW + ReduceLROnPlateau, early stopping (patience=10), L2
+- 클래스 불균형 처리: class_weight='balanced' + focal loss 옵션 (MLP), top-2 acc + macro-F1 보고
+
+### 결과 요약 (Test fold)
+| 모델 | 회귀 MAE | 회귀 R² | 분류 macroF1 | 분류 top-2 | 분류 ECE |
+|---|---|---|---|---|---|
+| LR  | 0.065 | 0.318 | 0.455 | 0.814 | 0.049 |
+| **GBM** | 0.044 | **0.532** | **0.529** | **0.875** | **0.030** |
+| MLP | **0.041** | 0.477 | 0.504 | 0.858 | 0.088 |
+- GBM 종합 우승. MLP는 calibration 부족 (focal loss 부작용) — eval-agent 단계에서 isotonic 보정 권장
+
+### 비자명한 트랩 (Phase 3에서 만남)
+- **DLL 충돌**: lightgbm + torch + pandas 동시 로드 시 fbgemm.dll 로드 실패 → run_baseline.py 상단에 `import torch` 먼저 + `bootstrap_registry`에서 `_mlp` 우선 import로 해결
+- **numpy 2.x ABI 깨짐**: torch 2.5.1은 numpy 2.x와 segfault → numpy<2 (1.26.4)로 다운그레이드. environment.yml에 핀 추가
+- conda env에 pytest 누락 → pip로 추가 설치
 - **Phase 0.8 완료**: HARNESS B 풀세트 적용
   - `.claude/` 풀구조 (settings.local.json, hooks, skills × 10, agents × 8)
   - PROJECT_PLAN.md (기획서, 읽기 전용), AGENT_REPORT_FORMAT.md
