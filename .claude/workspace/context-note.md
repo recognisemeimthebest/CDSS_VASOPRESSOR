@@ -203,6 +203,130 @@ sepsis3 + adult + LOS≥1d + first ICU stay + got NE-ever + **NE 시작 > intime
 - **출력 인터페이스**: 액션 추천 + 근거(어떤 변수가 영향) — 임상 신뢰성 확보.
 - 평가는 "의사 실제 결정과의 일치도" 외에 **counterfactual / off-policy evaluation** 고려 (RL 사용 시).
 
+## Phase 4 완료 (Offline RL 학습 + OPE)
+
+### 실행된 알고리즘 (2026-04-27)
+- BC (mlp, seed=42): `artifacts/runs/2026-04-27_rl_bc_mlp_42/`
+- dBCQ (mlp, seed=42): `artifacts/runs/2026-04-27_rl_dbcq_mlp_42/`
+- CQL (mlp, seed=42): `artifacts/runs/2026-04-27_rl_cql_mlp_42/`
+
+### OPE 결과 요약 (val fold)
+| Policy | WIS | FQE | ESS% | Match% | OOD% |
+|---|---|---|---|---|---|
+| **BC** | **6.642** [6.150,7.157] | 0.017 | **100.0** | 64.2 | 0.0 |
+| dBCQ | 6.361 [4.020,8.461] | **0.145** | 4.5 ⚠️ | 64.9 | 2.9 |
+| CQL | 2.363 [-0.541,5.187] | 0.127 | 3.9 ⚠️ | **68.2** | **0.5** |
+| Clinician | 6.004 [5.453,6.550] | 0.055 | 87.0 | 100.0 | 2.9 |
+
+### 해석 (비자명한 결정)
+- **BC WIS=6.64 > Clinician WIS=6.00**: BC가 clinician 모방이므로 IS ratio≈1 → ESS 100%. WIS 신뢰도 최고. 의사와 유사하지만 class-weight 보정으로 minority dose 더 추천 → 가중 수익 소폭 상승.
+- **dBCQ/CQL ESS 3~5%**: 두 알고리즘이 clinician 정책과 충분히 달라 IS 비율이 극단적 → WIS CI 매우 넓음. ESS 5% 미만 경고 발동.
+- **FQE 기준 dBCQ > CQL > clinician > BC**: FQE는 별도 critic이라 IS 문제 없음. dBCQ의 행동 제약이 Q 오버에스티메이션을 막으면서도 탐색 여지를 줌.
+- **CQL WIS 낮음**: conservative penalty가 action 분포를 크게 바꿔 IS 분산 폭발.
+
+### 결론
+- OPE 신뢰도: BC > Clinician >> dBCQ ≈ CQL (ESS 문제)
+- FQE 정책 가치: dBCQ > CQL (CI 겹침 주의 — 통계적 유의성 주장 불가)
+- 최종 권장: **BC를 안전 베이스라인**, dBCQ를 본 모델로 사용 (ESS 낮지만 FQE 우세)
+- 향후: CQL alpha 낮추거나 dBCQ bcq_threshold 올려 IS 분산 줄이기 고려
+
+## Phase 3.6 — Cost-Sensitive GBM 실험 (2026-04-27)
+
+### 동기
+표준 GBM의 class 2 (8.4-20 mcg/min, F1=0.356)가 최약점.
+표준 CE loss는 모든 오분류에 동일 패널티 → ordinal 구조 무시.
+해결책 시도: `C[i,j] = |i-j|^2` quadratic ordinal cost 로 대체.
+
+### 구현
+- `src/models/_gbm_cost.py`: `cost_sensitive_obj()` — LightGBM 4.x params["objective"] 방식
+- `scripts/run_cost_sensitive_gbm.py`: Optuna best_params 재사용 (공정 비교)
+- 아티팩트: `artifacts/runs/2026-04-27_gbm_cost_cls_42/`
+
+### 결과 (Test fold)
+| 지표 | Baseline GBM | Cost-Sensitive GBM | 변화 |
+|---|---|---|---|
+| Macro-F1 | 0.529 | 0.387 | **−0.143** |
+| Accuracy | 0.676 | 0.664 | −0.012 |
+| Top-2 Acc | 0.875 | **0.890** | **+0.015** |
+| Class 2 F1 | 0.356 | 0.299 | **−0.057** ← TARGET 오히려 악화 |
+| Class 3 F1 | 0.444 | 0.190 | −0.254 |
+| Class 4 F1 | 0.460 | 0.066 | **−0.394 (붕괴)** |
+
+### 해석 (비자명한 결론)
+- **가설 기각**: Cost-sensitive objective가 class 2를 개선하지 못했다.
+- **왜 실패했나?**:
+  1. **Optuna 파라미터 미적응**: best_params는 표준 CE loss에서 50 trials로 최적화됨. cost-sensitive loss는 gradient scale이 달라서 동일 lr=0.0039가 최적이 아님.
+  2. **Class 4 붕괴**: quadratic cost가 소수 class에 과도한 패널티를 부여해 gradient 불안정. class_weight (balanced)와 cost_matrix 패널티의 이중 증폭.
+  3. **Top-2 Acc 개선**: 모델이 ordinal-close 예측을 더 하지만 F1 기준으로는 오히려 binary-adjacent 버킷으로 뭉침.
+- **다음 대안** (우선순위 순):
+  1. ~~Soft Labels (Diaz et al. CVPR 2019)~~ → 시도함, 실패 (아래 참조)
+  2. Separate Optuna 튜닝 for cost-sensitive objective (공정한 비교를 위해 50 trials 추가)
+  3. CORAL loss (binary decomposition): 소수 class 성능에 더 안정적
+
+### 결론
+Cost-sensitive GBM 실험 = **음성 결과 (negative result)**. 기록 가치 있음.
+
+## Phase 3.6b — Soft Labels + MLP 실험 (2026-04-27)
+
+### 동기
+Cost-Sensitive GBM 실패 후 MLP에서 Gaussian soft label (Diaz et al. CVPR 2019) 시도.
+- One-hot 대신 Gaussian 분포로 라벨 교체: `p_k = exp(-|k-y|^2/(2σ^2))`
+- Loss = KL-divergence(soft_target ‖ softmax(logit)) = soft cross-entropy
+
+### 구현
+- `src/models/_mlp_soft.py`: `MLPSoftClassifier`, `SoftLabelKLLoss`, `make_soft_labels()`
+- `scripts/run_soft_labels_mlp.py`: sigma sweep {0.5, 0.8, 1.0, 1.5} → best val macro-F1 선택
+- 아티팩트: `artifacts/runs/2026-04-27_mlp_soft_cls_42/`
+
+### 결과 (Test fold, best sigma=0.5)
+| 지표 | Baseline MLP | Soft-Label MLP | 변화 |
+|---|---|---|---|
+| Macro-F1 | 0.504 | 0.479 | **−0.025** |
+| Accuracy | 0.642 | 0.608 | **−0.034** |
+| Top-2 Acc | 0.858 | 0.836 | −0.022 |
+| Class 2 F1 | 0.358 | **0.347** | −0.011 ← 목표 역방향 |
+
+Sigma sweep 결과: sigma=0.5 최고, sigma≥0.8은 epoch 2-6에 조기 수렴(붕괴)
+
+### 해석
+- **가설 기각**: Soft Labels도 class 2를 개선하지 못했다.
+- **왜 실패했나?**:
+  1. Optuna best_params가 focal loss로 튜닝됨 (lr=0.0065, use_focal=True) → KL loss와 비호환
+  2. sigma가 클수록 soft target이 균등 분포에 가까워져 class_weight와 충돌 → 조기 붕괴
+  3. sigma=0.5는 사실상 hard label에 가까운 Gaussian → CE와 큰 차이 없음
+
+### 종합 결론 (Phase 3.6 전체)
+**두 가지 ordinal 개선 시도 모두 음성 결과.**
+공통 원인: **Optuna 재튜닝 없이 타 loss 함수 파라미터 재사용** → gradient scale 불일치.
+
+## Phase 3.6c — GBM Threshold 조정 (2026-04-27) ✅ 양성 결과
+
+### 방법
+GBM 확률 출력에 per-class scale 벡터를 곱한 뒤 argmax:
+`pred = argmax( proba * scale_vector )`
+재학습 없음. Val fold에서 최적 scale 찾고 test fold에 적용.
+
+### 결과 (Test fold)
+| 전략 | Macro-F1 | Class 2 F1 | delta macro | delta cls2 |
+|---|---|---|---|---|
+| Baseline | 0.529 | 0.356 | 0 | 0 |
+| A: cls2×1.5 (max cls2-F1) | 0.519 | **0.395** | −0.010 | **+0.039** |
+| C: cls3×0.8 (max macro-F1) | 0.527 | 0.371 | −0.003 | **+0.015** |
+
+- **Strategy A**: class 2 F1 +0.039 (0.356→0.395). precision 0.320→0.292 (false positive 증가), recall 0.403→0.610 (누락 감소). 임상적으로 "더 적극적으로 class 2를 추천"하는 트레이드오프.
+- **Strategy C**: class 2 F1 +0.015, macro-F1 거의 유지 (−0.003). cls3 신뢰도를 낮춰 경계 케이스를 cls2로 끌어당김.
+- 아티팩트: `artifacts/runs/2026-04-27_gbm_threshold_cls_42/`
+
+### 해석 (비자명한 결정)
+- Threshold 조정은 precision-recall tradeoff를 후처리로 이동한 것 — 모델 학습 능력 향상이 아님
+- Strategy A (recall 중심): 놓치면 안 되는 고위험 구간에 유리 (class 2는 "증량 시작점")
+- Strategy C (균형): macro-F1 유지하면서 class 2 소폭 개선 → 운영 시 기본 선택
+- Streamlit 앱에서 "임상 목적 선택" 옵션으로 제공 가능 (recall-first vs balanced)
+
+현 단계에서의 최선:
+- **GBM + Strategy C scales (macro-F1=0.527, class 2 F1=0.371)** — 균형
+- **GBM + Strategy A scales (macro-F1=0.519, class 2 F1=0.395)** — class 2 최우선 시
+
 ## 참고 선행연구
 - AI Clinician (Komorowski 2018, Nat Med) — sepsis IV/vasopressor 추천 RL
 - Deep RL for radiotherapy dose adaptation (Tseng 2017 등)

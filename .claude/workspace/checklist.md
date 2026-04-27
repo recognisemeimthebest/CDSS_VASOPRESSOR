@@ -90,7 +90,50 @@
 - [x] gitignore 갱신 (.claude/hooks/shared/change-log.md 제외)
 - [ ] 커밋 + push
 
-## 다음 할 일 (Phase 1) — cohort-agent 호출
-1. EDA 노트북 (`notebooks/01_cohort_eda.ipynb`)
-2. 코호트 정의 (`src/cohort.py`) + consort flow
-이후 features-agent → supervised → rl → eval → streamlit, 각 단계 후 code-auditor + plan-auditor.
+## Phase 4: Offline RL 학습 ✅ 완료
+- [x] BC (mlp, seed=42) — WIS 6.642, ESS 100%, OPE 통과
+- [x] dBCQ (mlp, seed=42) — FQE 0.145, ESS 4.5% (낮음, 경고)
+- [x] CQL (mlp, seed=42) — FQE 0.127, ESS 3.9% (낮음, 경고)
+- [x] OPE (WIS + FQE + Bootstrap CI + Null baselines) — 모든 알고리즘 완료
+- [x] artifacts/runs/ 에 결과물 저장 (config.json, metrics.json, predictions.parquet, model.pt, ope_report.md)
+
+## 다음 할 일 (Phase 5 → 6)
+1. **Phase 5**: ~~eval-agent~~ 종합 리포트 → 완료 (텍스트 리포트로 대체)
+2. **Phase 6**: Streamlit 웹앱 구현 ✅
+   - [x] app/utils.py — 공통 데이터 로드 (캐시, 액션 레이블)
+   - [x] app/main.py — 메인 대시보드 (환자 선택 + GBM vs dBCQ 추천 + vitals 타임라인)
+   - [x] app/pages/01_ope_report.py — OPE 리포트 페이지
+   - [x] 데이터 로딩 검증 (1961 test stays, 18 bins/stay)
+   - [x] RL 버그 수정 (policy_proba one-hot→softmax, _q_monitor Q→match rate)
+   - [x] dBCQ/CQL 재실행 (ESS 4.5%→15%, 17.6%)
+   - [x] Streamlit 앱 실행 및 UI 확인 (HTTP 200, 데이터 로딩 정상)
+## Phase 3.6: GBM Cost-Sensitive 실험 ✅ 완료 (음성 결과)
+- [x] src/models/_gbm_cost.py — cost-sensitive custom objective 구현 (LightGBM 4.x API)
+- [x] scripts/run_cost_sensitive_gbm.py — 실험 스크립트
+- [x] 실행 및 기존 GBM 비교 — 결과: class 2 F1 0.356→0.299 (오히려 악화)
+  - Macro-F1: 0.529→0.387 (-0.143), Top-2 Acc: 0.875→0.890 (+0.015)
+  - 실패 원인: Optuna 파라미터 미적응 + class 4 gradient 붕괴
+- [x] context-note.md 결과 기록 (음성 결과 포함)
+- [x] (선택) Soft Labels + MLP 재학습 — 음성 결과 (class 2 F1 0.358→0.347, 더 낮음)
+  - sigma sweep {0.5, 0.8, 1.0, 1.5}: best sigma=0.5, 큰 sigma는 조기 붕괴
+  - 원인: Optuna focal-loss params와 KL-loss 비호환
+
+- [x] GBM Threshold 조정 (per-class scale sweep) — **양성 결과**
+  - Strategy A (cls2×1.5): class 2 F1 0.356→0.395 (+0.039), macro -0.010
+  - Strategy C (cls3×0.8): class 2 F1 0.356→0.371 (+0.015), macro -0.003
+  - 재학습 없음, 확률 스케일링만으로 달성
+
+## Phase 3.6 최종 판정 ✅
+- cost-sensitive GBM, soft labels MLP: 음성 결과
+- **GBM threshold 조정 (Strategy C): 양성 결과** — macro-F1=0.527, class 2 F1=0.371
+- 아티팩트: artifacts/runs/2026-04-27_gbm_threshold_cls_42/
+
+- [x] presentation/ 폴더 생성 + 발표자료용 그림/데이터/요약 생성
+  - figures/ : 7개 PNG (코호트, 모델비교, F1 히트맵, OPE, threshold, RL action dist, confusion matrix)
+  - data/ : summary_supervised.csv, summary_rl.csv
+  - SUMMARY.md : 전체 결과 마크다운 요약
+
+## 다음 할 일
+- [ ] 전체 코드 + 결과물 GitHub push
+
+3. **커밋**: 전체 코드 + 결과물 GitHub push
